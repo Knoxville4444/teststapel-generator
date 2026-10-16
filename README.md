@@ -12,8 +12,8 @@ eigenständigen Service. Siehe [docs/](docs/) für die Planungsdokumente.
 ## Struktur
 
 ```
-frontend/   Die bisherige, vollständig clientseitige Anwendung (siehe frontend/README.md)
-            -> wandert unverändert nach src/main/resources/static/ im Backend-Projekt
+frontend/   Vue 3 + Vite (siehe frontend/README.md) – Build-Ergebnis (dist/) wandert
+            nach src/main/resources/static/ im Backend-Projekt
 backend/    Java-Snippets (Controller + Service je Formulare/Favoriten) zum Einbau ins
             vorhandene Spring-Boot-Backend – kein eigenständiger Service
 docs/       Architektur, Entscheidungen, API-Entwurf

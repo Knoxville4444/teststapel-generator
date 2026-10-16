@@ -1,0 +1,22 @@
+{
+  "name": "teststapel-erzeugung-frontend",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "pdf-lib": "^1.17.1",
+    "pdfjs-dist": "^4.6.82",
+    "pinia": "^2.2.2",
+    "qrcode-generator": "^1.4.4",
+    "vue": "^3.4.38"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.1.3",
+    "vite": "^5.4.2"
+  }
+}

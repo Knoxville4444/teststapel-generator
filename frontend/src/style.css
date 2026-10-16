@@ -440,3 +440,48 @@ label {
   font-weight: 500;
   white-space: pre-line;
 }
+
+.fav-breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px;
+  font-size: 11px;
+  margin-bottom: 8px;
+}
+.fav-breadcrumb button {
+  border: none;
+  background: none;
+  padding: 2px 4px;
+  font-size: 11px;
+  color: var(--accent);
+  cursor: pointer;
+}
+.fav-breadcrumb button:hover { text-decoration: underline; }
+.fav-breadcrumb .sep { color: var(--text-muted); }
+
+.folder-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 0;
+  border-bottom: 0.5px solid var(--border);
+  cursor: pointer;
+}
+.folder-row:hover { color: var(--accent); }
+.folder-row .folder-icon { font-size: 13px; }
+.folder-row .folder-name { flex: 1; font-size: 12px; }
+.folder-row .del-btn {
+  position: static;
+  display: none;
+  flex-shrink: 0;
+}
+.folder-row:hover .del-btn { display: block; }
+
+.fav-new-folder {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+}
+.fav-new-folder input { flex: 1; }
+.fav-new-folder button { flex-shrink: 0; }

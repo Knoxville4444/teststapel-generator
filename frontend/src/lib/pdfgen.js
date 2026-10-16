@@ -1,11 +1,12 @@
-window.PdfGen = (function () {
-const { PDFDocument, rgb, StandardFonts } = window.PDFLib;
+import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
+import qrcode from 'qrcode-generator';
+import pdfjsLib from './pdfjs.js';
 
-const PAGE_W = 595.28;
-const PAGE_H = 841.89;
+export const PAGE_W = 595.28;
+export const PAGE_H = 841.89;
 const MARGIN = 40;
 
-function humanize(code) {
+export function humanize(code) {
   return code
     .toLowerCase()
     .split('_')
@@ -74,7 +75,7 @@ function centerText(page, text, y, size, font, black) {
   page.drawText(text, { x: (PAGE_W - w) / 2, y, size, font, color: black });
 }
 
-async function addPaketTrennblatt(pdfDoc, { kategorie }) {
+export async function addPaketTrennblatt(pdfDoc, { kategorie }) {
   const page = pdfDoc.addPage([PAGE_W, PAGE_H]);
   const { font, bold } = await makeFonts(pdfDoc);
   const black = rgb(0, 0, 0);
@@ -103,7 +104,7 @@ async function addPaketTrennblatt(pdfDoc, { kategorie }) {
   return page;
 }
 
-async function addDokumentTrennblatt(pdfDoc, { doktyp }) {
+export async function addDokumentTrennblatt(pdfDoc, { doktyp }) {
   const page = pdfDoc.addPage([PAGE_W, PAGE_H]);
   const { font, bold } = await makeFonts(pdfDoc);
   const black = rgb(0, 0, 0);
@@ -133,7 +134,7 @@ async function addDokumentTrennblatt(pdfDoc, { doktyp }) {
   return page;
 }
 
-async function addZbhBlatt(pdfDoc) {
+export async function addZbhBlatt(pdfDoc) {
   const page = pdfDoc.addPage([PAGE_W, PAGE_H]);
   const { font, bold } = await makeFonts(pdfDoc);
   const black = rgb(0, 0, 0);
@@ -178,7 +179,7 @@ function wrapText(font, text, size, maxWidth) {
   return lines;
 }
 
-async function addDummySeite(pdfDoc, { kind, pageLabel }) {
+export async function addDummySeite(pdfDoc, { kind, pageLabel }) {
   const page = pdfDoc.addPage([PAGE_W, PAGE_H]);
   const { font, bold } = await makeFonts(pdfDoc);
   const black = rgb(0, 0, 0);
@@ -369,11 +370,11 @@ async function addItemScanned(out, item, loadSourceDoc, loadSourcePdfJsDoc) {
     return;
   }
   const tempBytes = await temp.save();
-  const pdfjsDoc = await window.pdfjsLib.getDocument({ data: tempBytes }).promise;
+  const pdfjsDoc = await pdfjsLib.getDocument({ data: tempBytes }).promise;
   await rasterizeAndEmbed(out, pdfjsDoc, 1);
 }
 
-async function buildFinalPdf(items, loadSourceDoc, options = {}) {
+export async function buildFinalPdf(items, loadSourceDoc, options = {}) {
   const { scanMode = false, loadSourcePdfJsDoc = null, onProgress = null } = options;
   const out = await PDFDocument.create();
   let done = 0;
@@ -390,6 +391,3 @@ async function buildFinalPdf(items, loadSourceDoc, options = {}) {
   }
   return out.save();
 }
-
-return { PAGE_W, PAGE_H, humanize, addPaketTrennblatt, addDokumentTrennblatt, addZbhBlatt, addDummySeite, buildFinalPdf };
-})();
