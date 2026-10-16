@@ -2,6 +2,11 @@
 
 > **Erledigt sich durch Entscheidung 9** (siehe [DECISIONS.md](DECISIONS.md)) – hier
 > dokumentiert, damit die ursprüngliche Überlegung nachvollziehbar bleibt.
+>
+> **Aktuell zurückgestellt** (Eintrag 13): genauer Cookie-Flow wird nachgeliefert. UI
+> wird in der Zwischenzeit ohne Auth-Code gebaut (Annahme: Cookie liegt zur Laufzeit
+> vor). Vue wurde u. a. gewählt, um den in bestehenden Vue-Apps bereits gelösten
+> Cookie-Flow wiederzuverwenden, siehe Eintrag 12.
 
 ## Ursprünglicher Plan (verworfen)
 

@@ -36,23 +36,21 @@ Rohdaten (Formular-PDFs, Favoriten) – siehe
 
 ### Frontend (`frontend/`)
 
-Inhalt wandert unverändert nach `src/main/resources/static/` des bestehenden
+Wird auf Vue 3 + Vite umgebaut (siehe [DECISIONS.md](DECISIONS.md) Eintrag 12). Das
+Produktionsbuild (`dist/`) wandert nach `src/main/resources/static/` des bestehenden
 Spring-Boot-Projekts (Entscheidung 11) – Spring Boots Standard-Static-Resource-Handling
-liefert das automatisch aus, kein eigener Controller nötig. Funktional zwei Anpassungen
-am JS nötig:
+liefert das automatisch aus, kein eigener Controller nötig. Die Erzeugungs-Engine
+(`pdfgen.js`) wird unverändert übernommen. Funktional:
 
 - **Formular-Quelle:** aktuell lokaler Verzeichnis-Picker (`webkitdirectory`). Wird um
   einen zweiten Modus ergänzt, der die Formulare per `GET /api/formulare` lädt. Ob der
   lokale Picker als Fallback erhalten bleibt (z. B. für Offline-Tests), ist offen.
 - **Favoriten:** `localStorage` + `favoriten.json`-Austausch wird durch die neuen
-  `/api/favoriten`-Endpunkte ersetzt (inkl. Ordnerstruktur, siehe [API.md](API.md)).
-- **Auth:** kein neuer Login-Flow im Frontend nötig, sofern das bestehende Backend
-  Session-/Cookie-basiert arbeitet (üblich bei klassischem Spring-Security-Setup mit
-  serverseitig gerendertem Login). Falls das bestehende Backend stattdessen
-  token-basiert arbeitet (z. B. eigenes OIDC/JWT-Handling im Frontend bereits an
-  anderer Stelle im Haus etabliert), fällt hier etwas Integrationsarbeit an – **bitte
-  beim Review kurz einordnen, wie sich bestehende Frontends gegen dieses Backend
-  authentifizieren**, dann können wir das hier gezielt ergänzen.
+  `/api/favoriten`-Endpunkte ersetzt (inkl. Ordnerstruktur, siehe [API.md](API.md)) –
+  dafür eine Ordner-Navigation in der UI statt der bisherigen flachen Liste.
+- **Auth:** bewusst zurückgestellt (siehe [DECISIONS.md](DECISIONS.md) Eintrag 13).
+  Der Cookie-Flow (ausgestellt durch einen vorgeschalteten kleinen Service, bereits in
+  den vorhandenen Vue-Apps gelöst) wird nachgezogen, sobald die Details vorliegen.
 
 ### Backend-Erweiterung (`backend/`, zur Integration)
 
@@ -70,8 +68,8 @@ Endpunkte und `backend/` für den Code.
 
 ## Offene Punkte für die Review
 
-- Wie authentifizieren sich bestehende Frontends gegen das Spring-Boot-Backend
-  (Session/Cookie vs. Token)? Bestimmt, ob am Frontend noch etwas zu tun ist.
+- Genauer Cookie-Flow (siehe [DECISIONS.md](DECISIONS.md) Eintrag 13) – wird
+  nachgeliefert
 - Soll der lokale Verzeichnis-Picker als Fallback-Modus erhalten bleiben, oder wird die
   Formular-Quelle komplett auf die API umgestellt?
 - Genauer Volume-Pfad/Konvention im bestehenden Deployment, unter dem Formulare und

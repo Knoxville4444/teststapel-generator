@@ -112,3 +112,35 @@ Das Frontend wird direkt vom Backend mit ausgeliefert, kein separater Webserver 
 fürs Frontend. Spricht nichts dagegen für diesen Umfang – Spring Boot kann statische
 Ressourcen ohne Zusatzaufwand mitausliefern. Ersetzt die in Eintrag 7/Architektur noch
 offene Frage dazu.
+
+**Ergänzung durch Eintrag 12:** bleibt auch mit Vue so – es wandert künftig das
+Vue-Produktionsbuild (`dist/`-Ordner) statt der bisherigen handgeschriebenen Dateien
+nach `src/main/resources/static/`, der Mechanismus selbst ändert sich nicht.
+
+## 12. Frontend-Framework: Vue
+
+**Grund:** nicht in erster Linie wegen Vue selbst, sondern weil die vorhandenen
+Vue-Anwendungen im Haus den Auth-Cookie-Flow gegen den kleinen Cookie-Service bereits
+gelöst haben (siehe Eintrag 13) – dieses Muster wird wiederverwendet statt neu
+entwickelt. Zusätzlicher Nebeneffekt: der ursprüngliche Grund, bewusst ohne
+Framework/Build-Step zu arbeiten (`file://`-Zwang auf abgesicherten Windows-Rechnern,
+siehe Eintrag 2), ist mit dem Umzug hinters Backend ohnehin hinfällig.
+
+Die Erzeugungs-Engine (`pdfgen.js` – PDF-Aufbau, QR-Zeichnung, Scan-Effekt, künftig
+TIFF) ist framework-unabhängig und wird unverändert übernommen/eingebunden. Neu gebaut
+wird nur die UI-Schicht (bisher `app.js`/`index.html`).
+
+Tooling: Vite + Vue 3 (Standardwahl, keine Notwendigkeit für Vue 2/vue-cli). Dabei auch
+Gelegenheit, die bisherigen, wegen der `file://`-Beschränkung nötigen Workarounds
+abzulösen (z. B. veraltete, klassische PDF.js-Version statt des modernen Pakets) – jetzt
+mit echtem Build-Step über npm-Pakete statt manuell vendorierter Dateien.
+
+## 13. Auth-Integration: zurückgestellt
+
+Der genaue Cookie-Flow (HTTP-Cookie, ausgestellt durch einen kleinen vorgeschalteten
+Service) ist noch nicht im Detail bekannt und wird nachgeliefert. Die UI wird bereits
+jetzt ohne Auth-Code umgebaut (Annahme: Cookie liegt zur Laufzeit bereits vor, Browser
+sendet ihn automatisch mit) – die eigentliche Integration (Login-Redirect,
+Session-Check, 401-Handling) folgt als eigener Schritt, sobald die Informationen da
+sind. Betrifft auch die in Eintrag 6/[AUTH.md](AUTH.md) offene Frage zum genauen Ablauf
+auf Backend-Seite.
