@@ -1,44 +1,29 @@
 # Authentifizierung
 
-> Entwurf zur Review. Pflichtthema, keine optionale Ausbaustufe – interne
-> Webanwendungen dürfen organisatorisch nicht ungesichert angeboten werden (siehe
-> [DECISIONS.md](DECISIONS.md), Punkt 6).
+> **Erledigt sich durch Entscheidung 9** (siehe [DECISIONS.md](DECISIONS.md)) – hier
+> dokumentiert, damit die ursprüngliche Überlegung nachvollziehbar bleibt.
 
-## Setup
+## Ursprünglicher Plan (verworfen)
 
-- **Identity Provider:** selbst gehosteter Keycloak (eigener Container, siehe
-  [DEPLOYMENT.md](DEPLOYMENT.md))
-- **Verzeichnisanbindung:** Keycloak wird gegen einen internen Verzeichnisdienst
-  gebunden (LDAP oder Active Directory). **Zu bestätigen beim Review:** welcher der
-  beiden genau, sowie Zugangsdaten/Endpunkt für die Anbindung.
-- **Protokoll:** OIDC (OpenID Connect) – Standard-Login-Flow
+Zunächst war ein eigener, selbst gehosteter Keycloak vorgesehen, gebunden an LDAP.
+Grund war die organisatorische Vorgabe, interne Webanwendungen nicht ungesichert
+anzubieten.
 
-## Frontend
+## Aktueller Stand
 
-Aktuell keinerlei Auth-Code vorhanden (reine Client-Anwendung ohne Backend-Anbindung).
-Neu nötig:
+Die Funktionalität wird in ein **vorhandenes Spring-Boot-Backend** integriert, das
+bereits über eine fertige Absicherung verfügt (siehe
+[DECISIONS.md](DECISIONS.md), Eintrag 9). Damit ist die organisatorische Vorgabe
+automatisch erfüllt, ohne dass wir etwas Neues aufsetzen müssen.
 
-1. Beim Start prüfen, ob ein gültiges Token vorliegt (z. B. `oidc-client-ts` oder
-   vergleichbare Bibliothek, lokal vendored wie die übrigen Abhängigkeiten)
-2. Falls nicht: Redirect zu Keycloaks Login-Seite
-3. Nach Login: Callback verarbeiten, Token speichern (z. B. `sessionStorage`)
-4. Token bei jedem API-Aufruf im `Authorization`-Header mitsenden
-5. Token-Refresh vor Ablauf
+**Für die Integration zu beachten (vom Integrierenden zu prüfen, nicht Teil der hier
+vorbereiteten Snippets):**
 
-## Backend
-
-FastAPI validiert eingehende Requests gegen Keycloak:
-
-- JWT-Signaturprüfung über Keycloaks öffentliche Schlüssel (JWKS-Endpunkt,
-  Standard-OIDC-Discovery)
-- Abgelehnte/fehlende Token → `401`
-- Für den Scope ausreichend: Rollen-/Gruppenprüfung aus dem Token, keine eigene
-  Nutzerverwaltung im Backend nötig (Keycloak bleibt die einzige Quelle der Wahrheit)
-
-## Offene Punkte für die Review
-
-- LDAP oder Active Directory? (siehe oben)
-- Gibt es bereits einen Keycloak-Realm/-Instanz im Haus, die mitgenutzt werden kann,
-  oder wird für dieses Projekt ein neuer, dedizierter Realm aufgesetzt?
-- Rollenkonzept nötig (z. B. normale Nutzer vs. "Formularpflege"-Berechtigte für die
-  geplante Erweiterung), oder reicht initial "eingeloggt = darf alles"?
+- Die neuen Endpunkte (`/api/formulare/**`, `/api/favoriten/**`, siehe
+  [API.md](API.md)) müssen in die vorhandene Security-Konfiguration des Backends
+  eingehängt werden (z. B. vorhandene `SecurityFilterChain`/`@PreAuthorize`-Regeln).
+- Kein eigenes Rollenkonzept vorgesehen – "eingeloggt über das bestehende Backend"
+  reicht für den aktuellen Umfang (sehr kleine Nutzerzahl, geteilte Favoriten ohne
+  Besitzkonzept, siehe [DECISIONS.md](DECISIONS.md) Eintrag 10).
+- Der genaue Verzeichnisdienst (LDAP, wie zwischenzeitlich bestätigt) ist für uns nicht
+  mehr relevant, da er bereits Teil des bestehenden Backends ist.

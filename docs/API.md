@@ -1,11 +1,14 @@
 # API-Entwurf
 
-> Entwurf zur Review, noch nicht implementiert. Alle Endpunkte erfordern ein gültiges
-> Keycloak-Token (siehe [AUTH.md](AUTH.md)), außer explizit anders vermerkt.
+> Entwurf zur Review. Code-Bausteine zur Integration ins bestehende Spring-Boot-Backend
+> liegen als Java-Dateien unter [`backend/`](../backend/). Auth: siehe
+> [AUTH.md](AUTH.md) – hängt sich in die vorhandene Security-Konfiguration ein, hier
+> nicht separat behandelt.
 
 ## Formulare
 
 Ersetzt den bisherigen lokalen Verzeichnis-Picker durch eine zentrale Quelle.
+Siehe `backend/FormulareController.java` + `backend/FormulareService.java`.
 
 ### `GET /api/formulare`
 
@@ -18,60 +21,73 @@ Ebene).
     {
       "name": "Marken",
       "formulare": [
-        { "pfad": "Marken/W7005.pdf", "name": "W7005", "seiten": 1 }
+        { "pfad": "Marken/W7005.pdf", "name": "W7005" }
       ]
     }
   ]
 }
 ```
 
-### `GET /api/formulare/{pfad}`
+### `GET /api/formulare/datei?pfad=Marken/W7005.pdf`
 
-Liefert die PDF-Datei (Binärinhalt, `Content-Type: application/pdf`).
+Liefert die PDF-Datei (Binärinhalt, `Content-Type: application/pdf`). Pfad als
+Query-Parameter statt Pfadsegmente, damit Unterordner-Namen mit Sonderzeichen keine
+Spring-Pfad-Matching-Probleme verursachen – Service validiert gegen Path-Traversal
+(siehe Kommentar im Snippet).
 
 ## Favoriten
 
-Ersetzt `localStorage` + manuellen `favoriten.json`-Austausch. Datenformat identisch zu
-den bisherigen Anweisungsfolgen (siehe `frontend/app.js`, `itemsToInstructions`).
+Ersetzt `localStorage` + manuellen `favoriten.json`-Austausch. Geteilt (nicht privat je
+Nutzer), mit Ordnerstruktur beliebiger Tiefe, kein Besitzkonzept – jeder darf alles
+anlegen/verschieben/löschen (siehe [DECISIONS.md](DECISIONS.md) Eintrag 10).
+Datenformat der einzelnen Favoriten identisch zu den bisherigen Anweisungsfolgen (siehe
+`frontend/app.js`, `itemsToInstructions`).
+Siehe `backend/FavoritenController.java` + `backend/FavoritenService.java`.
 
-**Offen:** privat je Nutzer, geteilt im Team, oder beides? Beeinflusst, ob die Endpunkte
-einen Nutzerbezug brauchen oder global sind.
+### `GET /api/favoriten?pfad=`
 
-### `GET /api/favoriten`
-
-Liste aller (eigenen bzw. geteilten) Favoriten.
+Inhalt eines Ordners (leerer `pfad` = Wurzel): Unterordner + enthaltene Favoriten.
 
 ```json
-[
-  {
-    "name": "Standard-Nachgang Marke",
-    "items": [
-      { "type": "paket-trenn", "kategorie": "NEUANMELDUNG" },
-      { "type": "dokument-trenn", "doktyp": { "nr": 120, "name": "...", "fachsystem": "marke" } },
-      { "type": "datei", "relPath": "Marken/W7005.pdf", "label": "W7005" }
-    ]
-  }
-]
+{
+  "unterordner": ["Team-Marke", "Team-Patente"],
+  "favoriten": [
+    {
+      "name": "Standard-Nachgang Marke",
+      "items": [
+        { "type": "paket-trenn", "kategorie": "NEUANMELDUNG" },
+        { "type": "dokument-trenn", "doktyp": { "nr": 120, "name": "...", "fachsystem": "marke" } },
+        { "type": "datei", "relPath": "Marken/W7005.pdf", "label": "W7005" }
+      ]
+    }
+  ]
+}
 ```
 
-### `POST /api/favoriten`
+### `PUT /api/favoriten?pfad=Team-Marke/Standard-Nachgang`
 
-Legt einen Favoriten an oder überschreibt einen vorhandenen mit gleichem Namen (Body:
-wie oben, ein Objekt).
+Legt einen Favoriten an oder überschreibt ihn (Body: Favorit-Objekt wie oben, ohne
+`pfad`-Feld – der Pfad steht im Query-Parameter). Elternordner werden bei Bedarf
+automatisch angelegt.
 
-### `DELETE /api/favoriten/{name}`
+### `POST /api/favoriten/ordner?pfad=Team-Marke/Untergruppe`
 
-Löscht einen Favoriten.
+Legt einen (leeren) Unterordner an.
+
+### `DELETE /api/favoriten?pfad=Team-Marke/Standard-Nachgang`
+
+Löscht einen Favoriten oder – falls der Pfad ein Ordner ist – rekursiv den gesamten
+Ordner.
 
 ## Fax-Export (vorläufig, Phase 2)
 
-Noch nicht festgelegt, ob TIFF+Metadaten rein clientseitig bleiben (aktueller Plan,
-siehe [FAX_EXPORT.md](FAX_EXPORT.md)) oder ob das Backend das Ergebnis zusätzlich
-ablegt/protokolliert. Kein Endpunkt hierfür vorgesehen, solange Erzeugung clientseitig
-bleibt.
+Bleibt wie der PDF-Export clientseitig (siehe [FAX_EXPORT.md](FAX_EXPORT.md)). Kein
+Endpunkt hierfür vorgesehen, solange das so bleibt.
 
 ## Noch nicht entschieden
 
 - Doktypen/Dokumentenkategorien (`doktypen.json`, `dokumentkategorien.json`) weiterhin
   statisch im Frontend bündeln, oder ebenfalls über die API ausliefern (relevant für die
-  geplante "Formularpflege"-Erweiterung, siehe [DECISIONS.md](DECISIONS.md))?
+  geplante "Formularpflege"-Erweiterung, siehe [DECISIONS.md](DECISIONS.md) Eintrag 4)?
+- Genauer Volume-Pfad im Zieldeployment (siehe [ARCHITECTURE.md](ARCHITECTURE.md),
+  offene Punkte)

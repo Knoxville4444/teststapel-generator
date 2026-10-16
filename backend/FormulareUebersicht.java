@@ -1,0 +1,6 @@
+// TODO: an euer Package anpassen
+package de.beispiel.teststapel.formulare;
+
+import java.util.List;
+
+public record FormulareUebersicht(List<FormularGruppe> gruppen) {}

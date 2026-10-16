@@ -1,85 +1,79 @@
 # Architektur
 
 > Entwurf zur Review. Siehe [DECISIONS.md](DECISIONS.md) für die Begründungen der
-> einzelnen Punkte.
+> einzelnen Punkte, insbesondere Eintrag 9 (Integration statt neuem Service).
 
 ## Überblick
 
 ```
-                         ┌─────────────────────┐
-  Browser (Firefox) ───▶ │  Keycloak (OIDC)     │  Login / Token
-         │               └─────────────────────┘
-         │ Token
-         ▼
-┌─────────────────────────────────────────────┐
-│  Backend (Python / FastAPI)                  │
-│  - validiert Token gegen Keycloak            │
-│  - liefert Frontend-Assets aus (statisch)    │
-│  - REST-API: Formulare, Favoriten            │
-└─────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────────────┐
+│  Vorhandenes Spring-Boot-Backend (Java)                     │
+│                                                               │
+│  - Security: bereits vorhanden, hier nichts Neues            │
+│  - src/main/resources/static/  ← Frontend (unverändert)      │
+│  - FormulareController + FormulareService   (neu)            │
+│  - FavoritenController + FavoritenService   (neu)            │
+└───────────────────────────────────────────────────────────┘
          │
          ▼
-┌─────────────────────────────────────────────┐
-│  Storage (flache Dateien / SQLite)           │
-│  - Formular-Bibliothek (PDFs + Struktur)     │
-│  - Favoriten (je Nutzer oder geteilt – offen)│
-└─────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────────────┐
+│  Volume (Dateisystem, kein DB-Server)                        │
+│  - Formular-Bibliothek (PDFs, nach Unterverzeichnis gruppiert)│
+│  - Favoriten (Ordnerstruktur, geteilt, JSON je Favorit)       │
+└───────────────────────────────────────────────────────────┘
 ```
 
+Browser (Firefox) spricht nur mit diesem einen Backend – Login läuft über die bereits
+vorhandene Absicherung des Backends, dort ist nichts Neues zu integrieren außer den
+beiden Controllern in die vorhandene Security-Konfiguration einzuhängen.
+
 Die eigentliche Dokumentenerzeugung (PDF, QR-Codes, Scan-Effekt, künftig TIFF) passiert
-**ausschließlich im Browser**, nicht im Backend. Das Backend liefert nur Rohdaten
-(Formular-PDFs, Favoriten-Listen) und übernimmt die Zugriffskontrolle.
+weiterhin **ausschließlich im Browser**, nicht im Backend. Das Backend liefert nur
+Rohdaten (Formular-PDFs, Favoriten) – siehe
+[DECISIONS.md](DECISIONS.md) Eintrag 2.
 
 ## Komponenten
 
 ### Frontend (`frontend/`)
 
-Unverändert aus dem bisherigen Stand übernommen (siehe
-[frontend/README.md](../frontend/README.md)). Zwei Anpassungen für den Hosting-Betrieb
-offen:
+Inhalt wandert unverändert nach `src/main/resources/static/` des bestehenden
+Spring-Boot-Projekts (Entscheidung 11) – Spring Boots Standard-Static-Resource-Handling
+liefert das automatisch aus, kein eigener Controller nötig. Funktional zwei Anpassungen
+am JS nötig:
 
 - **Formular-Quelle:** aktuell lokaler Verzeichnis-Picker (`webkitdirectory`). Wird um
-  einen zweiten Modus ergänzt, der die Formulare per `GET /api/formulare` vom Backend
-  lädt, statt sie lokal auszuwählen. Ob der lokale Picker als Fallback erhalten bleibt
-  (z. B. für Tests ohne Backend), ist offen.
-- **Favoriten:** `localStorage` + `favoriten.json`-Austausch wird durch
-  `GET/POST/DELETE /api/favoriten` ersetzt.
-- **Auth:** Frontend braucht einen OIDC-Login-Flow (Redirect zu Keycloak, Callback,
-  Token-Handling/-Refresh) – bisher nicht vorhanden.
+  einen zweiten Modus ergänzt, der die Formulare per `GET /api/formulare` lädt. Ob der
+  lokale Picker als Fallback erhalten bleibt (z. B. für Offline-Tests), ist offen.
+- **Favoriten:** `localStorage` + `favoriten.json`-Austausch wird durch die neuen
+  `/api/favoriten`-Endpunkte ersetzt (inkl. Ordnerstruktur, siehe [API.md](API.md)).
+- **Auth:** kein neuer Login-Flow im Frontend nötig, sofern das bestehende Backend
+  Session-/Cookie-basiert arbeitet (üblich bei klassischem Spring-Security-Setup mit
+  serverseitig gerendertem Login). Falls das bestehende Backend stattdessen
+  token-basiert arbeitet (z. B. eigenes OIDC/JWT-Handling im Frontend bereits an
+  anderer Stelle im Haus etabliert), fällt hier etwas Integrationsarbeit an – **bitte
+  beim Review kurz einordnen, wie sich bestehende Frontends gegen dieses Backend
+  authentifizieren**, dann können wir das hier gezielt ergänzen.
 
-### Backend (`backend/`)
+### Backend-Erweiterung (`backend/`, zur Integration)
 
-Python/FastAPI-Service. Aufgaben:
-
-1. Statische Auslieferung des Frontends (oder per separatem Webserver – offen, siehe
-   [DEPLOYMENT.md](DEPLOYMENT.md))
-2. REST-API (siehe [API.md](API.md))
-3. Token-Validierung gegen Keycloak (OIDC)
-4. Zugriff auf Storage (Formular-Bibliothek, Favoriten)
-
-Bewusst **kein** ORM/DB-Server für den aktuellen Umfang – flache Dateien oder SQLite
-reichen.
-
-### Auth (Keycloak)
-
-Siehe [AUTH.md](AUTH.md).
+Kein eigenständiger Service – zwei Controller + zugehörige Service-Klassen als
+Java-Dateien zum Einbau ins bestehende Projekt, siehe [API.md](API.md) für die
+Endpunkte und `backend/` für den Code.
 
 ### Storage
 
-Für den aktuellen Umfang reicht ein einfaches Modell:
-
-- Formular-PDFs: Dateisystem, gleiche Ordnerstruktur wie bisher lokal (Gruppierung nach
-  Unterverzeichnisname, siehe `frontend/app.js`)
-- Favoriten: SQLite oder flache JSON-Dateien je Nutzer/Team (Entscheidung zu
-  Sichtbarkeit noch offen, siehe [API.md](API.md))
+- Formular-PDFs: Dateisystem-Volume, gleiche Ordnerstruktur wie bisher lokal
+  (Gruppierung nach Unterverzeichnisname, eine Ebene – siehe `frontend/app.js`)
+- Favoriten: Dateisystem-Volume, als Ordnerbaum gespiegelt (ein Unterordner = ein
+  Favoriten-Ordner, eine `.json`-Datei = ein Favorit) – kein DB-Server nötig, passt zur
+  sehr kleinen Nutzerzahl (siehe [DECISIONS.md](DECISIONS.md) Eintrag 9/10)
 
 ## Offene Punkte für die Review
 
-- Favoriten: pro Nutzer privat, team-/global geteilt, oder beides (z. B. "meine" +
-  "geteilte")?
-- Soll der lokale Verzeichnis-Picker als Fallback-Modus erhalten bleiben?
-- Verzeichnisdienst-Typ für Keycloak-Anbindung (LDAP/AD) – siehe
-  [DECISIONS.md](DECISIONS.md) Punkt 6
-- Soll das Backend das Frontend selbst ausliefern (ein Service) oder getrennt
-  (Backend nur API, Frontend separat z. B. über nginx) – siehe
-  [DEPLOYMENT.md](DEPLOYMENT.md)
+- Wie authentifizieren sich bestehende Frontends gegen das Spring-Boot-Backend
+  (Session/Cookie vs. Token)? Bestimmt, ob am Frontend noch etwas zu tun ist.
+- Soll der lokale Verzeichnis-Picker als Fallback-Modus erhalten bleiben, oder wird die
+  Formular-Quelle komplett auf die API umgestellt?
+- Genauer Volume-Pfad/Konvention im bestehenden Deployment, unter dem Formulare und
+  Favoriten abgelegt werden sollen (für die `@Value`-Konfiguration in den
+  Service-Klassen, siehe `backend/`)

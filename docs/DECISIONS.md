@@ -70,3 +70,45 @@ Das Projekt ist aus der vorherigen Zwischenablage in `Knoxville4444/exchange`
 `Knoxville4444/teststapel-generator`. Grund: eigenständiges Projekt mit wachsendem
 Funktionsumfang (Backend, Auth, Deployment), passt nicht mehr zu einer
 Zwischenablage-Struktur.
+
+## 9. Rollback von 5 und 6: Integration in vorhandenes Spring-Boot-Backend statt neuem Service
+
+**Ersetzt Eintrag 5 (Backend-Sprache: Python) und Eintrag 6 (Keycloak neu aufsetzen).**
+
+Es existiert bereits ein Backend im Haus (Spring Boot/Java) samt fertiger
+Absicherung. Statt eines neuen, eigenständigen Python-Services mit eigenem Keycloak
+wird die Funktionalität in dieses vorhandene Backend integriert:
+
+- **Sprache/Framework:** Java/Spring Boot (vorhandener Code), kein neuer Python-Service
+- **Auth:** bereits vorhanden und gelöst im bestehenden Backend – nichts Neues
+  aufzusetzen, unsere neuen Endpunkte hängen sich nur in die vorhandene
+  Security-Konfiguration ein. Die ursprünglich diskutierte Keycloak/LDAP-Anbindung
+  (Eintrag 6) ist damit hinfällig für diesen Teil; die LDAP-Bestätigung aus Eintrag 6
+  war ohnehin nur für den (jetzt verworfenen) neuen Keycloak nötig.
+- **Umfang für uns:** nur noch ein REST-Controller + zugehörige Service-Schicht als
+  Code-Bausteine (siehe [API.md](API.md), konkrete Dateien unter `backend/`), die
+  händisch ins bestehende Projekt integriert werden – kein eigenständig lauffähiges
+  Backend in diesem Repository.
+- **Storage:** bleibt wie zuvor überlegt bei flachen Dateien auf einem Volume (kein
+  DB-Server) – explizit bestätigt, u. a. weil die Nutzerzahl sehr klein ist.
+- **Deployment:** entfällt für uns weitgehend – folgt dem bestehenden
+  Deployment-Prozess des Spring-Boot-Backends, kein eigenes Docker-Compose-Setup nötig
+  (siehe [DEPLOYMENT.md](DEPLOYMENT.md)).
+- **Rendering/Erzeugung:** unverändert clientseitig im Browser (Eintrag 2 bleibt
+  bestehen, ausdrücklich erneut bestätigt).
+
+## 10. Favoriten: geteilt, mit Ordnerstruktur, kein Besitzkonzept
+
+Favoriten sind **team-weit geteilt**, nicht privat je Nutzer. Zusätzlich gibt es eine
+**Ordnerstruktur mit beliebig vielen Ebenen** (nicht nur eine flache Liste) – Nutzer
+können Ordner anlegen und Favoriten darin ablegen. Jeder Nutzer darf alles anlegen,
+verschieben und löschen, unabhängig davon, wer es ursprünglich angelegt hat (kein
+Besitz-/Berechtigungskonzept auf Favoriten-Ebene). Ersetzt die in Eintrag 4 noch offene
+Frage "privat vs. geteilt".
+
+## 11. Frontend-Auslieferung: direkt durch das (bestehende) Backend
+
+Das Frontend wird direkt vom Backend mit ausgeliefert, kein separater Webserver nur
+fürs Frontend. Spricht nichts dagegen für diesen Umfang – Spring Boot kann statische
+Ressourcen ohne Zusatzaufwand mitausliefern. Ersetzt die in Eintrag 7/Architektur noch
+offene Frage dazu.

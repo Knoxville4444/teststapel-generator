@@ -6,26 +6,30 @@ Trennblättern (Paket, Dokument, ZBH) und Dummy-Seiten zu Testdokumenten
 zusammengestellt.
 
 **Status:** Umbau von reiner Client-Anwendung (lokal, `file://`) zu zentral gehosteter
-Variante mit Backend und Authentifizierung läuft. Siehe [docs/](docs/) für die
-Planungsdokumente.
+Variante läuft – Integration in ein vorhandenes Spring-Boot-Backend statt eines neuen
+eigenständigen Service. Siehe [docs/](docs/) für die Planungsdokumente.
 
 ## Struktur
 
 ```
 frontend/   Die bisherige, vollständig clientseitige Anwendung (siehe frontend/README.md)
-backend/    Python/FastAPI-Service – API, Auth-Anbindung, Dateiauslieferung (im Aufbau)
-deploy/     Docker-Setup für den zentralen Betrieb (im Aufbau)
-docs/       Architektur, Entscheidungen, API- und Auth-Entwurf
+            -> wandert unverändert nach src/main/resources/static/ im Backend-Projekt
+backend/    Java-Snippets (Controller + Service je Formulare/Favoriten) zum Einbau ins
+            vorhandene Spring-Boot-Backend – kein eigenständiger Service
+docs/       Architektur, Entscheidungen, API-Entwurf
 ```
+
+`deploy/` entfällt (siehe [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)) – folgt dem
+bestehenden Deployment-Prozess des Spring-Boot-Backends.
 
 ## Dokumentation
 
 - [docs/DECISIONS.md](docs/DECISIONS.md) – Entscheidungsprotokoll mit Begründungen
-  (zuerst lesen)
+  (zuerst lesen, insbesondere Eintrag 9: Integration statt neuem Service)
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) – Systemüberblick
-- [docs/API.md](docs/API.md) – Geplante REST-Endpunkte
-- [docs/AUTH.md](docs/AUTH.md) – Keycloak/OIDC-Anbindung
-- [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) – Docker-Setup
+- [docs/API.md](docs/API.md) – REST-Endpunkte, verweist auf die Java-Snippets
+- [docs/AUTH.md](docs/AUTH.md) – warum hier nichts Neues aufzusetzen ist
+- [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) – was für die Integration noch zu klären ist
 - [docs/FAX_EXPORT.md](docs/FAX_EXPORT.md) – Fax/TIFF-Export (zwei Ausbaustufen)
 - [frontend/README.md](frontend/README.md) – Bedienung und Technik der bestehenden
   Oberfläche
